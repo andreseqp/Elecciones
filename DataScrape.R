@@ -31,20 +31,57 @@ rawData<-regisNAl%>%
 
 str(rawData)
 
-candidatos<-grep("\n ",rawData,value = TRUE)
+candidatos.dirt<-gsub("\n","",grep("\n ",rawData,value = TRUE))
+
+candidatos<-do.call(rbind,lapply(candidatos.dirt,function(x){
+  full<-strsplit(x," ")
+  nomb<-paste(grep("[[:alpha:]]",full[[1]],value = TRUE),collapse = " ")
+  return(nomb)
+}))
+
+numero<-do.call(rbind,lapply(candidatos.dirt,function(x){
+  full<-strsplit(x," ")
+  numer<-grep("[[:digit:]]",full[[1]],value = TRUE)
+  if(length(numer)>0){
+      return(as.numeric(substr(numer,2,4)))
+  }
+  else{
+    return(NA)
+  }
+}))
+
+grep("[[:digit:]]",candidatos.dirt,invert = TRUE)
+candidatos.dirt[numero[,1]!=numero[,2]]
+numero[numero[,1]!=numero[,2],]
+candidatos.dirt[numero[,1]!=numero[,2]]
+
+dim(numero)[1]==length(candidatos.dirt)
+
+
+head(candidatos)
 votos<-grep("%",rawData,value = TRUE)
+head(votos)
+
+length(candidatos)==length(votos)
+
+votos.int<-unlist(lapply(votos,function(list1)
+  {strsplit(list1," ")[[1]][1]}))
+
+gsub(".","",votos.int[962])
 
 length(candidatos)==length(votos.int)
 
-votos.int<-unlist(lapply(votos,function(list1)
-  {as.numeric(strsplit(list1," ")[[1]][1])}))
+head(votos.int)
 
 votos.perc<-unlist(lapply(votos,function(list1)
-{substr(strsplit(list1," ")[[1]][2])}))
+{
+  tmp<-gsub(",",".",strsplit(list1," ")[[1]][2])
+  return(as.numeric(substr(tmp,2,nchar(tmp)-2)))
+}))
 
 
-
-
+elecciones<-data.table(cbind(numero[,1],candidatos,votos.int,votos.perc))
+names(elecciones)[1:2]<-c("numero","Nombre")
 
 
 
