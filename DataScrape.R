@@ -86,7 +86,7 @@ votos.perc<-unlist(lapply(votos,function(list1)
 
 
 elecciones<-data.table(numero[,1],candidatos,votos.int,votos.perc,candidatos.ids)
-names(elecciones)[1:2]<-c("numero","Nombre")
+names(elecciones)[1:2]<-c("numero.cand","Nombre")
 
 rawData[1:50]
 partidos<-rawData
@@ -107,6 +107,8 @@ elecciones[partido=="NA",partido:=partidos[23]]
 tot.votos.part.reg<-14474450
 votos.blanc.reg<-835445
 votos.blanc.reg.ind<-340798
+
+tot.votos.con.umbral<-elecciones.senado[partido %in%partidos.senado[umbral==TRUE,partido],sum(votos.int)]
 
 
 elecciones[,votos.perc.calc:=100*prop.table(votos.int)]
@@ -131,24 +133,36 @@ partidos.senado<-elecciones.senado[,.(votos.int=sum(votos.int),
                                votos.perc.blanc=sum(votos.perc.blanc)),
                                by=partido]
 
+
 elecciones.senado[,.(sum(votos.perc),sum(votos.perc.calc),sum(votos.perc.blanc))]
 
 partidos.senado[,.(sum(votos.perc),sum(votos.perc.calc),sum(votos.perc.blanc))]
+
+partidos.senado[,umbral:=ifelse(votos.perc>3,TRUE,FALSE)]
+
+partidos.senado[,num.sen:=round(100*votos.int/tot.votos.con.umbral)]
+
+elecciones.senado[,numero.cand:=ifelse(is.na(numero.cand),0,numero.cand)]
 
 100*votos.blanc.reg/(votos.blanc.reg+elecciones.senado[,sum(votos.int)])
 
 with(elecciones.senado[grep("centro democrático",partido,ignore.case = TRUE)],{
   par(las=1,xpd=TRUE)
+  senad<-partidos.senado[grep("centro democrático",partido,ignore.case = TRUE),num.sen]
   cd.bar<<-barplot(votos.perc.blanc[order(votos.perc.blanc,decreasing = TRUE)]
-          ,col = c(rep('blue',20),rep('black',length(votos.int)-20)))
-  arrows(x1=cd.bar[numero[order(votos.perc.blanc,decreasing = TRUE)]==1]
-         ,y1=votos.perc.blanc[numero==1],
-         y0=votos.perc.blanc[numero==1]+0.2,
-         x0=cd.bar[numero[order(votos.perc.blanc,decreasing = TRUE)]==1]+7,
+          ,col = c(rep('blue',senad)
+                   ,rep('black',length(votos.int)-senad)))
+  arrows(x1=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]
+         ,y1=votos.perc.blanc[numero.cand==1],
+         y0=votos.perc.blanc[numero.cand==1]+max(votos.perc)*0.04,
+         x0=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
          lwd=3)
-  text(x = cd.bar[numero[order(votos.perc.blanc,decreasing = TRUE)]==1]+7,
-       y=votos.perc.blanc[numero[order(votos.perc.blanc,decreasing = TRUE)]==1],
-       labels = Nombre[numero[order(votos.perc.blanc,decreasing = TRUE)]==1],
+  text(x = cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
+       y=votos.perc.blanc[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1],
+       labels = Nombre[
+         order(votos.perc.blanc,
+               decreasing = TRUE)][numero.cand[order(votos.perc.blanc,
+                                                     decreasing = TRUE)]==1],
        adj = c(-0.2,-1))
   arrows(x1=cd.bar[grep("solo por la lista",
                         Nombre[order(votos.perc.blanc,decreasing = TRUE)],
@@ -158,13 +172,13 @@ with(elecciones.senado[grep("centro democrático",partido,ignore.case = TRUE)],{
                                   ignore.case = TRUE)],
          y0=votos.perc.blanc[grep("solo por la lista",
                                   Nombre,
-                                  ignore.case = TRUE)]+0.2,
+                                  ignore.case = TRUE)]+max(votos.perc)*0.04,
          x0=cd.bar[grep("solo por la lista",
                         Nombre[order(votos.perc.blanc,decreasing = TRUE)],
-                                  ignore.case = TRUE)]+7,lwd=3)
+                                  ignore.case = TRUE)]+0.11*length(Nombre),lwd=3)
   text(x = cd.bar[grep("solo por la lista",
                        Nombre[order(votos.perc.blanc,decreasing = TRUE)],
-                       ignore.case = TRUE)]+7,
+                       ignore.case = TRUE)]+0.11*length(Nombre),
        y=votos.perc.blanc[grep("solo por la lista",
                                Nombre,
                                ignore.case = TRUE)],
@@ -173,19 +187,26 @@ with(elecciones.senado[grep("centro democrático",partido,ignore.case = TRUE)],{
                             ignore.case = TRUE)],
        adj = c(-0.2,-1))
 })
+
 
 with(elecciones.senado[grep("cambio radical",partido,ignore.case = TRUE)],{
   par(las=1,xpd=TRUE)
+  senad<-partidos.senado[grep("cambio radical",partido,ignore.case = TRUE),num.sen]
   cd.bar<<-barplot(votos.perc.blanc[order(votos.perc.blanc,decreasing = TRUE)]
-                   ,col = c(rep('blue',17),rep('black',length(votos.int)-20)))
-  arrows(x1=cd.bar[numero[order(votos.perc.blanc,decreasing = TRUE)]==1]
-         ,y1=votos.perc.blanc[numero==1],
-         y0=votos.perc.blanc[numero==1]+0.1,
-         x0=cd.bar[numero[order(votos.perc.blanc,decreasing = TRUE)]==1]+1,
+                   ,col = c(rep('blue',senad)
+                            ,rep('black',length(votos.int)-senad)))
+  arrows(x1=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]
+         ,y1=votos.perc.blanc[numero.cand==1],
+         y0=votos.perc.blanc[numero.cand==1]+max(votos.perc)*0.04,
+         x0=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
          lwd=3)
-  text(x = cd.bar[numero[order(votos.perc.blanc,decreasing = TRUE)]==1]+7,
-       y=votos.perc.blanc[numero==1],
-       labels = Nombre[numero==1])
+  text(x = cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
+       y=votos.perc.blanc[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1],
+       labels = Nombre[
+         order(votos.perc.blanc,
+               decreasing = TRUE)][numero.cand[order(votos.perc.blanc,
+                                                     decreasing = TRUE)]==1],
+       adj = c(-0.2,-1))
   arrows(x1=cd.bar[grep("solo por la lista",
                         Nombre[order(votos.perc.blanc,decreasing = TRUE)],
                         ignore.case = TRUE)],
@@ -194,13 +215,13 @@ with(elecciones.senado[grep("cambio radical",partido,ignore.case = TRUE)],{
                                   ignore.case = TRUE)],
          y0=votos.perc.blanc[grep("solo por la lista",
                                   Nombre,
-                                  ignore.case = TRUE)]+0.2,
+                                  ignore.case = TRUE)]+max(votos.perc)*0.04,
          x0=cd.bar[grep("solo por la lista",
                         Nombre[order(votos.perc.blanc,decreasing = TRUE)],
-                        ignore.case = TRUE)]+7,lwd=3)
+                        ignore.case = TRUE)]+0.11*length(Nombre),lwd=3)
   text(x = cd.bar[grep("solo por la lista",
                        Nombre[order(votos.perc.blanc,decreasing = TRUE)],
-                       ignore.case = TRUE)]+7,
+                       ignore.case = TRUE)]+0.11*length(Nombre),
        y=votos.perc.blanc[grep("solo por la lista",
                                Nombre,
                                ignore.case = TRUE)],
@@ -210,4 +231,88 @@ with(elecciones.senado[grep("cambio radical",partido,ignore.case = TRUE)],{
        adj = c(-0.2,-1))
 })
 
-elecciones.senado[grep("cambio radical",partido,ignore.case = TRUE),]
+
+with(elecciones.senado[grep("unidad nacional",partido,ignore.case = TRUE)],{
+  par(las=1,xpd=TRUE)
+  senad<-partidos.senado[grep("unidad nacional",partido,ignore.case = TRUE),num.sen]
+  cd.bar<<-barplot(votos.perc.blanc[order(votos.perc.blanc,decreasing = TRUE)]
+                   ,col = c(rep('blue',senad)
+                            ,rep('black',length(votos.int)-senad)))
+  arrows(x1=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]
+         ,y1=votos.perc.blanc[numero.cand==1],
+         y0=votos.perc.blanc[numero.cand==1]+max(votos.perc)*0.04,
+         x0=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
+         lwd=3)
+  text(x = cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
+       y=votos.perc.blanc[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1],
+       labels = Nombre[
+         order(votos.perc.blanc,
+               decreasing = TRUE)][numero.cand[order(votos.perc.blanc,
+                                                     decreasing = TRUE)]==1],
+       adj = c(-0.2,-1))
+  arrows(x1=cd.bar[grep("solo por la lista",
+                        Nombre[order(votos.perc.blanc,decreasing = TRUE)],
+                        ignore.case = TRUE)],
+         y1=votos.perc.blanc[grep("solo por la lista",
+                                  Nombre,
+                                  ignore.case = TRUE)],
+         y0=votos.perc.blanc[grep("solo por la lista",
+                                  Nombre,
+                                  ignore.case = TRUE)]+max(votos.perc)*0.04,
+         x0=cd.bar[grep("solo por la lista",
+                        Nombre[order(votos.perc.blanc,decreasing = TRUE)],
+                        ignore.case = TRUE)]+0.11*length(Nombre),lwd=3)
+  text(x = cd.bar[grep("solo por la lista",
+                       Nombre[order(votos.perc.blanc,decreasing = TRUE)],
+                       ignore.case = TRUE)]+0.11*length(Nombre),
+       y=votos.perc.blanc[grep("solo por la lista",
+                               Nombre,
+                               ignore.case = TRUE)],
+       labels = Nombre[grep("solo por la lista",
+                            Nombre,
+                            ignore.case = TRUE)],
+       adj = c(-0.2,-1))
+})
+
+with(elecciones.senado[grep("Mira",partido,ignore.case = TRUE)],{
+  par(las=1,xpd=TRUE)
+  senad<-partidos.senado[grep("Mira",partido,ignore.case = TRUE),num.sen]
+  cd.bar<<-barplot(votos.perc.blanc[order(votos.perc.blanc,decreasing = TRUE)]
+                   ,col = c(rep('blue',senad+1)
+                            ,rep('black',length(votos.int)-senad+1)))
+  arrows(x1=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]
+         ,y1=votos.perc.blanc[numero.cand==1],
+         y0=votos.perc.blanc[numero.cand==1]+max(votos.perc)*0.04,
+         x0=cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
+         lwd=3)
+  text(x = cd.bar[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1]+0.11*length(Nombre),
+       y=votos.perc.blanc[numero.cand[order(votos.perc.blanc,decreasing = TRUE)]==1],
+       labels = Nombre[
+         order(votos.perc.blanc,
+               decreasing = TRUE)][numero.cand[order(votos.perc.blanc,
+                                                     decreasing = TRUE)]==1],
+       adj = c(-0.2,-1))
+  arrows(x1=cd.bar[grep("solo por la lista",
+                        Nombre[order(votos.perc.blanc,decreasing = TRUE)],
+                        ignore.case = TRUE)],
+         y1=votos.perc.blanc[grep("solo por la lista",
+                                  Nombre,
+                                  ignore.case = TRUE)],
+         y0=votos.perc.blanc[grep("solo por la lista",
+                                  Nombre,
+                                  ignore.case = TRUE)]+max(votos.perc)*0.04,
+         x0=cd.bar[grep("solo por la lista",
+                        Nombre[order(votos.perc.blanc,decreasing = TRUE)],
+                        ignore.case = TRUE)]+0.11*length(Nombre),lwd=3)
+  text(x = cd.bar[grep("solo por la lista",
+                       Nombre[order(votos.perc.blanc,decreasing = TRUE)],
+                       ignore.case = TRUE)]+0.11*length(Nombre),
+       y=votos.perc.blanc[grep("solo por la lista",
+                               Nombre,
+                               ignore.case = TRUE)],
+       labels = Nombre[grep("solo por la lista",
+                            Nombre,
+                            ignore.case = TRUE)],
+       adj = c(-0.2,-1))
+})
+
